@@ -129,11 +129,13 @@ class MedicalNER:
             "other":        [],
         }
 
+        # scispaCy en_core_sci_sm uses "ENTITY" for all medical concepts.
+        # Larger models use specific labels — we handle both cases.
         for ent in doc.ents:
             label = ent.label_.upper()
             text_val = ent.text.strip()
 
-            if label in ("DISEASE", "SYMPTOM", "PROBLEM", "CONDITION"):
+            if label in ("DISEASE", "SYMPTOM", "PROBLEM", "CONDITION", "ENTITY"):
                 entities["symptoms"].append(text_val)
             elif label in ("BODY_PART", "TISSUE", "ANATOMY"):
                 entities["body_parts"].append(text_val)
@@ -144,9 +146,15 @@ class MedicalNER:
             else:
                 entities["other"].append(f"{text_val} ({label})")
 
-        # Deduplicate
+        # Always run regex on top to catch durations & measurements
+        # that scispaCy's small model may miss
+        regex_entities = self._regex_fallback(text)
+        for key in ("durations", "measurements"):
+            entities[key].extend(regex_entities[key])
+
+        # Deduplicate all buckets
         for key in entities:
-            entities[key] = list(dict.fromkeys(entities[key]))
+            entities[key] = list(dict.fromkeys(v for v in entities[key] if v))
 
         return entities
 
