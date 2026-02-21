@@ -1,0 +1,37 @@
+# ── Fine-tuning (MLX — Mac M-series Apple Silicon) ───────────────────────────
+mlx-lm
+
+# ── Core LLM / RAG ────────────────────────────────────────────────────────────
+langchain==0.3.20
+langchain-community==0.3.10
+langchain-core>=0.3
+langchain-huggingface
+langchain-text-splitters
+
+# ── Vector Store ──────────────────────────────────────────────────────────────
+chromadb==0.4.22
+
+# ── Embeddings & Reranking ────────────────────────────────────────────────────
+sentence-transformers
+huggingface-hub
+
+# ── Medical NER ───────────────────────────────────────────────────────────────
+spacy
+# After install, run these two commands:
+#   python -m spacy download en_core_web_sm
+#   pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz
+
+# ── Dataset & Model Hub ───────────────────────────────────────────────────────
+datasets
+transformers
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy
+
+# ── UI ────────────────────────────────────────────────────────────────────────
+streamlit
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv
+pydantic>=2.0
+tqdm
