@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 PROJECT_ROOT = Path(__file__).parent.parent
 ADAPTER_DIR  = PROJECT_ROOT / "2_finetune" / "adapters"
 FUSED_DIR    = PROJECT_ROOT / "2_finetune" / "fused_model"
-BASE_MODEL   = "meta-llama/Llama-3.2-3B-Instruct"
+BASE_MODEL   = "mlx-community/Llama-3.2-3B-Instruct"
 
 load_dotenv(PROJECT_ROOT / ".env")
 HF_TOKEN     = os.getenv("HF_TOKEN")
@@ -55,11 +55,11 @@ def fuse_adapter():
     FUSED_DIR.mkdir(parents=True, exist_ok=True)
 
     cmd = [
-        sys.executable, "-m", "mlx_lm.fuse",
+        sys.executable, "-m", "mlx_lm", "fuse",
         "--model", BASE_MODEL,
         "--adapter-path", str(ADAPTER_DIR),
         "--save-path", str(FUSED_DIR),
-        "--de-quantize",          # convert back to float16 for HF compatibility
+        "--dequantize",           # convert back to float16 for HF compatibility
     ]
 
     result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))

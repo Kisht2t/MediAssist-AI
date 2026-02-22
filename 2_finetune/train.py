@@ -13,9 +13,11 @@ Or equivalently (runs the same config directly):
   python -m mlx_lm.lora --config 2_finetune/config.yaml
 """
 
+import os
 import subprocess
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -23,6 +25,9 @@ DATA_DIR     = PROJECT_ROOT / "1_data" / "processed"
 CONFIG_FILE  = PROJECT_ROOT / "2_finetune" / "config.yaml"
 ADAPTER_DIR  = PROJECT_ROOT / "2_finetune" / "adapters"
 # ──────────────────────────────────────────────────────────────────────────────
+
+load_dotenv(PROJECT_ROOT / ".env")
+HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 
 def check_prerequisites():
@@ -66,7 +71,12 @@ def run_training():
     print("   Watch the loss — it should drop from ~2.5 down to ~1.0-1.5.")
     print()
 
-    result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
+    # Pass HF_TOKEN so MLX-LM can download the gated Llama model
+    env = os.environ.copy()
+    env["HF_TOKEN"] = HF_TOKEN
+    env["HUGGING_FACE_HUB_TOKEN"] = HF_TOKEN   # fallback key some versions use
+
+    result = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
 
     if result.returncode != 0:
         print("\n❌  Training failed. Check output above for details.")

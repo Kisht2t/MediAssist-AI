@@ -298,8 +298,50 @@ def classify_triage(query: str, entities: dict) -> tuple[str, bool]:
 
 def generate_response(query: str, context_docs: list, triage: str) -> str:
     """
-    Calls the fine-tuned MediAssist model via HuggingFace Inference API.
-    Falls back to a rule-based response if HF_TOKEN is not set.
+    Runs inference using the fine-tuned MediAssist model via MLX-LM locally.
+    This uses the LoRA adapter on top of the base model directly on Apple Silicon.
+    Falls back to a rule-based response if MLX is not available.
+    """
+    try:
+        from mlx_lm import load, generate as mlx_generate
+
+        BASE_MODEL  = "mlx-community/Llama-3.2-3B-Instruct"
+        ADAPTER_DIR = str(PROJECT_ROOT / "2_finetune" / "adapters")
+
+        context = "\n\n---\n\n".join(doc.page_content for doc in context_docs)
+        prompt = (
+            f"<|begin_of_text|>"
+            f"<|start_header_id|>system<|end_header_id|>\n\n"
+            f"{SYSTEM_PROMPT}\n\n"
+            f"Use the following medical reference information:\n\n{context}"
+            f"<|eot_id|>"
+            f"<|start_header_id|>user<|end_header_id|>\n\n"
+            f"{query}<|eot_id|>"
+            f"<|start_header_id|>assistant<|end_header_id|>\n\n"
+        )
+
+        model, tokenizer = load(BASE_MODEL, adapter_path=ADAPTER_DIR)
+        response = mlx_generate(
+            model, tokenizer,
+            prompt=prompt,
+            max_tokens=400,
+            temperature=0.3,
+            repetition_penalty=1.1,
+        )
+        # Strip the prompt from the response if echoed back
+        if prompt in response:
+            response = response.replace(prompt, "").strip()
+        return response.split("<|eot_id|>")[0].strip()
+
+    except Exception as e:
+        print(f"   Warning: MLX generation failed ({e}) — using fallback")
+        return _fallback_response(query, context_docs, triage)
+
+
+def _unused_hf_api_generate(query: str, context_docs: list, triage: str) -> str:
+    """
+    Legacy HuggingFace Inference API approach — kept for reference.
+    HF discontinued free serverless inference for custom models in 2025.
     """
     if not HF_TOKEN:
         return _fallback_response(query, context_docs, triage)
