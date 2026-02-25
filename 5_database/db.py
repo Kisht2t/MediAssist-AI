@@ -245,6 +245,58 @@ class Database:
             ]
 
 
+    def get_all_queries(self) -> list[dict]:
+        """Returns all queries with timestamp for trend charts."""
+        from sqlalchemy import select, asc
+        with Session(self._engine) as sess:
+            rows = sess.execute(
+                select(Query).order_by(asc(Query.created_at))
+            ).scalars().all()
+            return [
+                {
+                    "id":           q.id,
+                    "patient_text": q.patient_text[:120],
+                    "triage_level": q.triage_level,
+                    "is_emergency": q.is_emergency,
+                    "date":         q.created_at.strftime("%Y-%m-%d"),
+                    "timestamp":    q.created_at.isoformat(),
+                }
+                for q in rows
+            ]
+
+    def get_entity_frequency(self, entity_type: str = "symptoms", top_n: int = 15) -> list[dict]:
+        """Returns most frequent NER entities of the given type."""
+        from sqlalchemy import func, select
+        with Session(self._engine) as sess:
+            rows = sess.execute(
+                select(NEREntity.entity_text, func.count(NEREntity.id).label("count"))
+                .where(NEREntity.entity_type == entity_type)
+                .group_by(NEREntity.entity_text)
+                .order_by(func.count(NEREntity.id).desc())
+                .limit(top_n)
+            ).all()
+            return [{"entity": r[0], "count": r[1]} for r in rows]
+
+    def get_session_count(self) -> int:
+        """Total number of chat sessions."""
+        from sqlalchemy import func, select
+        with Session(self._engine) as sess:
+            return sess.execute(select(func.count(ChatSession.id))).scalar() or 0
+
+    def get_emergency_count(self) -> int:
+        """Total number of emergency-flagged queries."""
+        from sqlalchemy import func, select
+        with Session(self._engine) as sess:
+            return sess.execute(
+                select(func.count(Query.id)).where(Query.is_emergency == True)
+            ).scalar() or 0
+
+    def get_total_query_count(self) -> int:
+        """Total number of queries ever."""
+        from sqlalchemy import func, select
+        with Session(self._engine) as sess:
+            return sess.execute(select(func.count(Query.id))).scalar() or 0
+
 # ── Init check ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     db = Database()

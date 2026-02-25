@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediAssist API Docs</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚕</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Tokens ─────────────────────────────────────────────────────────────── */
+    :root {
+      --bg:          #06090f;
+      --bg2:         #0b1018;
+      --bg3:         #101720;
+      --bg4:         #162035;
+      --accent:      #00c9ad;
+      --accent-dim:  rgba(0,201,173,0.09);
+      --accent-glow: rgba(0,201,173,0.22);
+      --text:        #d8e8f5;
+      --text2:       #7d9ab8;
+      --text3:       #3d5570;
+      --border:      rgba(255,255,255,0.055);
+      --border-a:    rgba(0,201,173,0.2);
+      --low:         #10b981;
+      --medium:      #f59e0b;
+      --high:        #f43f5e;
+      --sidebar-w:   260px;
+      --topbar-h:    56px;
+    }
+
+    /* ── Reset ──────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82em;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 7px;
+      color: var(--accent);
+    }
+    pre {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    h1, h2, h3 { font-family: 'Crimson Pro', Georgia, serif; letter-spacing: -0.02em; }
+    h4, h5, h6 { font-family: 'DM Sans', sans-serif; font-weight: 600; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ── Top bar ────────────────────────────────────────────────────────────── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--topbar-h);
+      background: rgba(6,9,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 1.5rem;
+    }
+    .topbar-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Crimson Pro', serif;
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--text); white-space: nowrap;
+      text-decoration: none;
+    }
+    .topbar-logo .badge {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, #00c9ad, #006a8e);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      box-shadow: 0 2px 10px var(--accent-glow);
+    }
+    .topbar-nav {
+      display: flex; align-items: center; gap: 4px;
+      margin-left: 1.5rem;
+    }
+    .topbar-nav a {
+      font-size: 0.85rem; font-weight: 500; color: var(--text2);
+      padding: 5px 12px; border-radius: 6px;
+      transition: all 0.18s;
+    }
+    .topbar-nav a:hover, .topbar-nav a.active {
+      background: var(--accent-dim); color: var(--accent); text-decoration: none;
+    }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .btn-primary {
+      background: var(--accent); color: var(--bg);
+      font-size: 0.82rem; font-weight: 600;
+      padding: 6px 14px; border-radius: 7px;
+      transition: all 0.18s; white-space: nowrap;
+      text-decoration: none !important;
+    }
+    .btn-primary:hover { background: #009e8c; box-shadow: 0 4px 14px var(--accent-glow); }
+    .btn-outline {
+      border: 1px solid var(--border); color: var(--text2);
+      font-size: 0.82rem; font-weight: 500;
+      padding: 5px 12px; border-radius: 7px;
+      transition: all 0.18s; text-decoration: none !important;
+    }
+    .btn-outline:hover { border-color: var(--border-a); color: var(--accent); }
+
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      padding-top: var(--topbar-h);
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: var(--topbar-h);
+      bottom: 0;
+      left: 0;
+      overflow-y: auto;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+    }
+    .sidebar-section-label {
+      font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--text3); padding: 0 1.25rem;
+      margin: 1.25rem 0 0.4rem;
+    }
+    .sidebar-section-label:first-child { margin-top: 0; }
+    .sidebar a {
+      display: block;
+      font-size: 0.85rem; color: var(--text2);
+      padding: 5px 1.25rem;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .sidebar a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+    }
+    .sidebar a.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .sidebar-divider {
+      height: 1px; background: var(--border);
+      margin: 1rem 1.25rem;
+    }
+
+    /* ── Main content ───────────────────────────────────────────────────────── */
+    .content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 3rem 4rem 6rem;
+      max-width: 900px;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 3rem 0 3.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+    .hero h1 {
+      font-size: 3rem; color: var(--text);
+      margin-bottom: 0.75rem; line-height: 1.1;
+    }
+    .hero p {
+      font-size: 1.05rem; color: var(--text2);
+      max-width: 520px; margin: 0 auto 1.75rem;
+      line-height: 1.6;
+    }
+    .hero-actions { display: flex; gap: 10px; justify-content: center; }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-dim); border: 1px solid var(--border-a);
+      border-radius: 999px; padding: 4px 14px;
+      font-size: 0.78rem; font-weight: 500; color: var(--accent);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Sections ───────────────────────────────────────────────────────────── */
+    .section { margin-bottom: 4rem; scroll-margin-top: calc(var(--topbar-h) + 1.5rem); }
+    .section-title {
+      font-size: 1.9rem; color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .section-subtitle {
+      font-size: 0.9rem; color: var(--text2);
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Cards grid ─────────────────────────────────────────────────────────── */
+    .cards {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin: 1.5rem 0;
+    }
+    .cards-2 { grid-template-columns: repeat(2, 1fr); }
+    .card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem;
+      transition: border-color 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .card:hover {
+      border-color: var(--border-a);
+      transform: translateY(-2px);
+    }
+    .card-icon {
+      font-size: 1.3rem; margin-bottom: 0.65rem;
+    }
+    .card h4 { font-size: 0.92rem; color: var(--text); margin-bottom: 5px; }
+    .card p  { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+
+    /* ── Endpoint block ─────────────────────────────────────────────────────── */
+    .endpoint {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .endpoint-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .endpoint-header:hover { background: rgba(255,255,255,0.02); }
+    .method-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 5px;
+      letter-spacing: 0.04em;
+    }
+    .method-post { background: rgba(0,201,173,0.15); color: var(--accent); }
+    .method-get  { background: rgba(99,102,241,0.15); color: #818cf8; }
+    .endpoint-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem; color: var(--text);
+    }
+    .endpoint-desc { font-size: 0.82rem; color: var(--text2); margin-left: auto; }
+    .endpoint-body { padding: 1.25rem; }
+    .endpoint-body h5 {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.11em; text-transform: uppercase;
+      color: var(--text3); margin: 1rem 0 0.5rem;
+    }
+    .endpoint-body h5:first-child { margin-top: 0; }
+    .endpoint-body p { font-size: 0.84rem; color: var(--text2); margin-bottom: 0.75rem; }
+
+    /* ── Params table ───────────────────────────────────────────────────────── */
+    .params { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; }
+    .params th {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text3);
+      text-align: left; padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .params td {
+      font-size: 0.83rem; color: var(--text2);
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      vertical-align: top;
+    }
+    .params td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--accent); font-size: 0.8rem; }
+    .params tr:last-child td { border-bottom: none; }
+    .tag-required {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+      background: rgba(244,63,94,0.12); color: #f43f5e;
+      border: 1px solid rgba(244,63,94,0.2);
+      border-radius: 4px; padding: 1px 6px; margin-left: 6px;
+    }
+    .tag-optional {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+      background: rgba(125,154,184,0.1); color: var(--text3);
+      border: 1px solid var(--border);
+      border-radius: 4px; padding: 1px 6px; margin-left: 6px;
+    }
+
+    /* ── Triage badges ──────────────────────────────────────────────────────── */
+    .triage-grid { display: flex; gap: 10px; flex-wrap: wrap; margin: 0.75rem 0; }
+    .triage-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      border-radius: 999px; padding: 6px 14px;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .triage-low    { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; }
+    .triage-medium { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #f59e0b; }
+    .triage-high   { background: rgba(244,63,94,0.1);  border: 1px solid rgba(244,63,94,0.25);  color: #f43f5e; }
+
+    /* ── Callout ────────────────────────────────────────────────────────────── */
+    .callout {
+      border-radius: 10px; padding: 1rem 1.25rem;
+      display: flex; gap: 12px; align-items: flex-start;
+      margin: 1rem 0;
+    }
+    .callout-info    { background: var(--accent-dim); border: 1px solid var(--border-a); }
+    .callout-warning { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .callout-body { font-size: 0.84rem; color: var(--text2); line-height: 1.6; }
+    .callout-body strong { color: var(--text); }
+
+    /* ── Lang tabs ──────────────────────────────────────────────────────────── */
+    .lang-tabs { display: flex; gap: 4px; margin-bottom: -1px; position: relative; z-index: 1; }
+    .lang-tab {
+      font-size: 0.78rem; font-weight: 500; color: var(--text3);
+      padding: 6px 14px; border-radius: 8px 8px 0 0;
+      border: 1px solid transparent; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .lang-tab.active, .lang-tab:hover {
+      background: var(--bg2); border-color: var(--border);
+      border-bottom-color: var(--bg2); color: var(--accent);
+    }
+    .lang-block { display: none; }
+    .lang-block.active { display: block; }
+    .lang-block pre { border-radius: 0 12px 12px 12px; margin-top: 0; }
+
+    /* ── Arch diagram ───────────────────────────────────────────────────────── */
+    .arch {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+      text-align: center; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; color: var(--text2); line-height: 2;
+    }
+    .arch-accent { color: var(--accent); }
+    .arch-arrow { color: var(--text3); }
+
+    /* ── Footer ─────────────────────────────────────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 0 0;
+      margin-top: 4rem;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .footer p { font-size: 0.8rem; color: var(--text3); }
+    .footer a  { font-size: 0.8rem; color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ──────────────────────────────────────────────────────────────── -->
+<nav class="topbar">
+  <a class="topbar-logo" href="#home">
+    <div class="badge">⚕</div>
+    MediAssist API Docs
+  </a>
+  <div class="topbar-nav">
+    <a href="#quickstart" class="active">Developer Guide</a>
+    <a href="#endpoints">API Reference</a>
+    <a href="#architecture">Architecture</a>
+  </div>
+  <div class="topbar-right">
+    <a href="https://github.com/Kisht2t/MediAssist-AI" target="_blank" class="btn-outline">GitHub ↗</a>
+    <a href="/docs" target="_blank" class="btn-primary">Swagger UI</a>
+  </div>
+</nav>
+
+<!-- ── Layout ───────────────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-section-label">Getting Started</div>
+    <a href="#home">Overview</a>
+    <a href="#quickstart">Quickstart</a>
+    <a href="#authentication">Authentication</a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Endpoints</div>
+    <a href="#endpoint-query">POST /query</a>
+    <a href="#endpoint-session">POST /session</a>
+    <a href="#endpoint-stats">GET /session/stats</a>
+    <a href="#endpoint-memory">GET /memory/count</a>
+    <a href="#endpoint-health">GET /health</a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Core Concepts</div>
+    <a href="#triage">Triage Levels</a>
+    <a href="#memory">Memory System</a>
+    <a href="#rag">RAG Pipeline</a>
+    <a href="#architecture">Architecture</a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Code Examples</div>
+    <a href="#example-python">Python</a>
+    <a href="#example-js">JavaScript</a>
+    <a href="#example-curl">cURL</a>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">Resources</div>
+    <a href="https://huggingface.co/kisht2t/mediassist-llama-3.2-3b" target="_blank">Model on HuggingFace ↗</a>
+    <a href="https://github.com/Kisht2t/MediAssist-AI" target="_blank">GitHub Repo ↗</a>
+    <a href="/docs" target="_blank">Swagger UI ↗</a>
+  </aside>
+
+  <!-- ── Main content ──────────────────────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- Hero -->
+    <div class="hero" id="home">
+      <div class="hero-pill">⚕ v1.0.0 · REST API</div>
+      <h1>Build with MediAssist</h1>
+      <p>Add AI-powered medical symptom analysis, triage classification, and RAG-grounded responses to any application.</p>
+      <div class="hero-actions">
+        <a href="#quickstart" class="btn-primary">Get started →</a>
+        <a href="/docs" target="_blank" class="btn-outline">Swagger UI</a>
+      </div>
+    </div>
+
+    <!-- What you can build -->
+    <div class="section" id="overview">
+      <h2 class="section-title">What you can build</h2>
+      <p class="section-subtitle">MediAssist exposes the full medical AI pipeline as a simple HTTP API.</p>
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">📱</div>
+          <h4>Mobile health apps</h4>
+          <p>Add symptom checking and triage to iOS or Android apps with a single POST request.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🌐</div>
+          <h4>Healthcare websites</h4>
+          <p>Embed an AI symptom checker widget on any website using the REST API.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <h4>Chat integrations</h4>
+          <p>Wire MediAssist into WhatsApp, Telegram, or Slack bots for health Q&amp;A.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔬</div>
+          <h4>Research tools</h4>
+          <p>Batch-process patient queries and analyse triage distributions at scale.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏥</div>
+          <h4>Clinic workflows</h4>
+          <p>Pre-screen patients before appointments with automated triage and NER.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">📊</div>
+          <h4>Analytics dashboards</h4>
+          <p>Ingest structured triage responses and visualise population health trends.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quickstart -->
+    <div class="section" id="quickstart">
+      <h2 class="section-title">Quickstart</h2>
+      <p class="section-subtitle">Make your first API call in under 2 minutes.</p>
+
+      <h4 style="margin-bottom:0.75rem;font-size:0.95rem;">1. Start the API server</h4>
+      <pre><code>cd "DocPatient Proejct"
+python 4_app/api.py
+# → MediAssist API ready at http://localhost:8000</code></pre>
+
+      <h4 style="margin:1.25rem 0 0.75rem;font-size:0.95rem;">2. Send your first query</h4>
+
+      <div class="lang-tabs">
+        <span class="lang-tab active" onclick="switchTab(this,'qs-python')">Python</span>
+        <span class="lang-tab" onclick="switchTab(this,'qs-js')">JavaScript</span>
+        <span class="lang-tab" onclick="switchTab(this,'qs-curl')">cURL</span>
+      </div>
+      <div id="qs-python" class="lang-block active">
+        <pre><code>import requests
+
+response = requests.post("http://localhost:8000/query", json={
+    "text": "I have a severe headache and stiff neck for 2 days"
+})
+
+data = response.json()
+print(data["triage_level"])   # HIGH
+print(data["is_emergency"])   # True
+print(data["answer"])         # MediAssist's response
+print(data["session_id"])     # use for follow-up messages</code></pre>
+      </div>
+      <div id="qs-js" class="lang-block">
+        <pre><code>const response = await fetch("http://localhost:8000/query", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    text: "I have a severe headache and stiff neck for 2 days"
+  })
+});
+
+const data = await response.json();
+console.log(data.triage_level);   // HIGH
+console.log(data.is_emergency);   // true
+console.log(data.answer);         // MediAssist's response</code></pre>
+      </div>
+      <div id="qs-curl" class="lang-block">
+        <pre><code>curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"text": "I have a severe headache and stiff neck for 2 days"}'</code></pre>
+      </div>
+
+      <h4 style="margin:1.25rem 0 0.75rem;font-size:0.95rem;">3. Response</h4>
+      <pre><code>{
+  "answer":       "A severe headache combined with a stiff neck is concerning...",
+  "triage_level": "HIGH",
+  "is_emergency": true,
+  "entities": {
+    "symptoms":     ["headache", "stiff neck"],
+    "durations":    ["2 days"],
+    "body_parts":   [],
+    "measurements": []
+  },
+  "sources":    ["Emergency signs: sudden severe headache..."],
+  "session_id": "42"
+}</code></pre>
+    </div>
+
+    <!-- Authentication -->
+    <div class="section" id="authentication">
+      <h2 class="section-title">Authentication</h2>
+      <p class="section-subtitle">The current version runs locally with no authentication required.</p>
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ</span>
+        <div class="callout-body">
+          <strong>Local deployment:</strong> No API key is required when running MediAssist locally.
+          For production deployments, add an <code>Authorization: Bearer &lt;token&gt;</code> header
+          and a FastAPI dependency to validate it.
+        </div>
+      </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="section" id="endpoints">
+      <h2 class="section-title">API Reference</h2>
+      <p class="section-subtitle">All endpoints accept and return JSON. Base URL: <code>http://localhost:8000</code></p>
+
+      <!-- POST /query -->
+      <div class="endpoint" id="endpoint-query">
+        <div class="endpoint-header">
+          <span class="method-badge method-post">POST</span>
+          <span class="endpoint-path">/query</span>
+          <span class="endpoint-desc">Main medical query endpoint</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Send a patient message. Runs the full pipeline: NER extraction → ChromaDB retrieval → reranking → triage classification → LLM generation.</p>
+
+          <h5>Request body</h5>
+          <table class="params">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>text<span class="tag-required">required</span></td><td><code>string</code></td><td>Patient's message or symptom description</td></tr>
+              <tr><td>session_id<span class="tag-optional">optional</span></td><td><code>string</code></td><td>Session ID from <code>POST /session</code>. Auto-created if omitted.</td></tr>
+              <tr><td>history<span class="tag-optional">optional</span></td><td><code>Message[]</code></td><td>Previous conversation turns for short-term context memory.</td></tr>
+            </tbody>
+          </table>
+
+          <h5>Response fields</h5>
+          <table class="params">
+            <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>answer</td><td><code>string</code></td><td>MediAssist's natural language response</td></tr>
+              <tr><td>triage_level</td><td><code>"LOW" | "MEDIUM" | "HIGH"</code></td><td>Urgency classification</td></tr>
+              <tr><td>is_emergency</td><td><code>boolean</code></td><td>True if 911 / ER visit is recommended</td></tr>
+              <tr><td>entities</td><td><code>object</code></td><td>NER-extracted symptoms, durations, measurements</td></tr>
+              <tr><td>sources</td><td><code>string[]</code></td><td>RAG document excerpts used to ground the response</td></tr>
+              <tr><td>session_id</td><td><code>string</code></td><td>Session ID — pass back for follow-up messages</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- POST /session -->
+      <div class="endpoint" id="endpoint-session">
+        <div class="endpoint-header">
+          <span class="method-badge method-post">POST</span>
+          <span class="endpoint-path">/session</span>
+          <span class="endpoint-desc">Create a new chat session</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Creates a new session and returns a <code>session_id</code>. Pass this in subsequent <code>/query</code> calls to link them for analytics.</p>
+          <pre><code>POST /session
+→ { "session_id": "42" }</code></pre>
+        </div>
+      </div>
+
+      <!-- GET /session/{id}/stats -->
+      <div class="endpoint" id="endpoint-stats">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/session/{session_id}/stats</span>
+          <span class="endpoint-desc">Triage distribution for a session</span>
+        </div>
+        <div class="endpoint-body">
+          <pre><code>GET /session/42/stats
+→ {
+    "session_id": "42",
+    "triage_counts": { "LOW": 3, "MEDIUM": 1, "HIGH": 0 }
+  }</code></pre>
+        </div>
+      </div>
+
+      <!-- GET /memory/count -->
+      <div class="endpoint" id="endpoint-memory">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/memory/count</span>
+          <span class="endpoint-desc">Long-term patient facts stored</span>
+        </div>
+        <div class="endpoint-body">
+          <p>Returns the number of persistent patient facts stored in the vector memory (e.g. age, allergies, chronic conditions).</p>
+          <pre><code>GET /memory/count
+→ { "count": 7 }</code></pre>
+        </div>
+      </div>
+
+      <!-- GET /health -->
+      <div class="endpoint" id="endpoint-health">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/health</span>
+          <span class="endpoint-desc">System health check</span>
+        </div>
+        <div class="endpoint-body">
+          <pre><code>GET /health
+→ {
+    "status":          "ok",
+    "pipeline_loaded": true,
+    "chromadb_chunks": 2062,
+    "memory_facts":    7,
+    "model":           "kisht2t/mediassist-llama-3.2-3b (Llama 3.2 3B + LoRA)"
+  }</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Triage levels -->
+    <div class="section" id="triage">
+      <h2 class="section-title">Triage Levels</h2>
+      <p class="section-subtitle">Every response includes a <code>triage_level</code> and <code>is_emergency</code> flag.</p>
+
+      <div class="triage-grid">
+        <span class="triage-pill triage-low">● LOW</span>
+        <span class="triage-pill triage-medium">◆ MEDIUM</span>
+        <span class="triage-pill triage-high">▲ HIGH</span>
+      </div>
+
+      <table class="params" style="margin-top:1rem;">
+        <thead><tr><th>Level</th><th>is_emergency</th><th>Meaning</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>LOW</td><td><code>false</code></td><td>Self-care appropriate</td><td>Common cold, mild headache</td></tr>
+          <tr><td>MEDIUM</td><td><code>false</code></td><td>See a doctor within 24 h</td><td>Persistent fever, ear infection</td></tr>
+          <tr><td>HIGH</td><td><code>false</code> or <code>true</code></td><td>Emergency care needed</td><td>Seizure, severe allergic reaction</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warning" style="margin-top:1rem;">
+        <span class="callout-icon">⚠</span>
+        <div class="callout-body">
+          <strong>Disclaimer:</strong> MediAssist provides general health information only.
+          It is not a substitute for professional medical advice, diagnosis, or treatment.
+          Always display this disclaimer when using the API in a user-facing product.
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory system -->
+    <div class="section" id="memory">
+      <h2 class="section-title">Memory System</h2>
+      <p class="section-subtitle">MediAssist has two layers of memory for personalised, coherent conversations.</p>
+
+      <div class="cards cards-2">
+        <div class="card">
+          <div class="card-icon">💬</div>
+          <h4>Short-term (context window)</h4>
+          <p>Pass recent turns in the <code>history</code> field. The model reads the full thread — follow-up messages like "it's been 3 days" understand prior context.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧠</div>
+          <h4>Long-term (vector memory)</h4>
+          <p>Stable facts — age, allergies, chronic conditions — are automatically extracted and stored in ChromaDB. Retrieved on future queries across sessions.</p>
+        </div>
+      </div>
+
+      <h4 style="margin:1.5rem 0 0.75rem;font-size:0.95rem;">Multi-turn example</h4>
+      <pre><code># Turn 1 — establish context
+r1 = requests.post("/query", json={"text": "I have a headache"})
+sid = r1.json()["session_id"]
+
+# Turn 2 — follow-up: model knows what "it" refers to
+r2 = requests.post("/query", json={
+    "text": "It's been 3 days now",
+    "session_id": sid,
+    "history": [
+        {"role": "user",      "content": "I have a headache"},
+        {"role": "assistant", "content": r1.json()["answer"]},
+    ]
+})
+# → Model correctly interprets "It's been 3 days" as the headache duration</code></pre>
+    </div>
+
+    <!-- Architecture -->
+    <div class="section" id="architecture">
+      <h2 class="section-title">Architecture</h2>
+      <p class="section-subtitle">Every query flows through a five-stage pipeline.</p>
+
+      <div class="arch">
+        <div><span class="arch-accent">Patient text</span></div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">[Medical NER]</span> &nbsp;·&nbsp; scispaCy en_core_sci_sm — extracts symptoms, durations, measurements</div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">[ChromaDB Retrieval]</span> &nbsp;·&nbsp; 2,062 chunks — BAAI/bge-small-en-v1.5 embeddings</div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">[Cross-Encoder Reranker]</span> &nbsp;·&nbsp; ms-marco-MiniLM-L-6-v2 — scores true relevance</div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">[Triage Classifier]</span> &nbsp;·&nbsp; rule-based LOW / MEDIUM / HIGH</div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">[LLM Generation]</span> &nbsp;·&nbsp; Llama 3.2 3B + MediAssist LoRA (MLX, Apple Silicon)</div>
+        <div class="arch-arrow">↓</div>
+        <div><span class="arch-accent">Structured JSON response</span></div>
+      </div>
+
+      <h4 style="margin:2rem 0 0.75rem;font-size:0.95rem;">Model</h4>
+      <table class="params">
+        <thead><tr><th>Component</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td>Base model</td><td>mlx-community/Llama-3.2-3B-Instruct</td></tr>
+          <tr><td>Fine-tuning</td><td>LoRA (rank 8, alpha 16) on ChatDoctor dataset — 4,498 doctor-patient conversations</td></tr>
+          <tr><td>Inference</td><td>MLX (Apple Silicon) · temp=0.4, top_p=0.9</td></tr>
+          <tr><td>HuggingFace</td><td><a href="https://huggingface.co/kisht2t/mediassist-llama-3.2-3b" target="_blank">kisht2t/mediassist-llama-3.2-3b ↗</a></td></tr>
+          <tr><td>Knowledge base</td><td>2,062 chunks — 80 Wikipedia medical articles + curated triage/symptom docs</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Code examples -->
+    <div class="section" id="example-python">
+      <h2 class="section-title">Code Examples</h2>
+      <p class="section-subtitle">Complete, copy-pasteable examples for common use cases.</p>
+
+      <h4 style="margin-bottom:0.75rem;font-size:0.95rem;" id="example-python">Python — full conversation with memory</h4>
+      <pre><code>import requests
+
+BASE = "http://localhost:8000"
+
+# Create a session
+session_id = requests.post(f"{BASE}/session").json()["session_id"]
+
+history = []
+
+def ask(text):
+    resp = requests.post(f"{BASE}/query", json={
+        "text":       text,
+        "session_id": session_id,
+        "history":    history,
+    }).json()
+
+    # Store turn in history for next message
+    history.append({"role": "user",      "content": text})
+    history.append({"role": "assistant", "content": resp["answer"]})
+    if len(history) > 12:
+        history[:] = history[-12:]  # keep last 6 exchanges
+
+    return resp
+
+# Conversation
+r = ask("I'm 34 and allergic to penicillin. I have a sore throat.")
+print(f"Triage: {r['triage_level']}")  # LOW or MEDIUM
+print(r["answer"])
+
+r2 = ask("The fever started this morning — 38.9°C")
+print(f"Triage: {r2['triage_level']}")  # likely MEDIUM now
+print(r2["answer"])  # model knows about penicillin allergy from memory</code></pre>
+
+      <h4 style="margin:2rem 0 0.75rem;font-size:0.95rem;" id="example-js">JavaScript (fetch)</h4>
+      <pre><code>async function askMediAssist(text, sessionId = null, history = []) {
+  const res = await fetch("http://localhost:8000/query", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, session_id: sessionId, history }),
+  });
+  return res.json();
+}
+
+// Usage
+const { answer, triage_level, session_id } = await askMediAssist(
+  "I have chest pain and shortness of breath"
+);
+
+if (triage_level === "HIGH") {
+  showEmergencyBanner();
+}
+displayMessage(answer);</code></pre>
+
+      <h4 style="margin:2rem 0 0.75rem;font-size:0.95rem;" id="example-curl">cURL</h4>
+      <pre><code># Health check
+curl http://localhost:8000/health
+
+# Create session
+curl -X POST http://localhost:8000/session
+
+# Query
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text":       "I have had a fever of 39C and a rash for 2 days",
+    "session_id": "42"
+  }'
+
+# Session stats
+curl http://localhost:8000/session/42/stats</code></pre>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>MediAssist API v1.0.0 · Built with FastAPI + MLX + ChromaDB</p>
+      <div style="display:flex;gap:16px;">
+        <a href="https://huggingface.co/kisht2t/mediassist-llama-3.2-3b" target="_blank">Model ↗</a>
+        <a href="https://github.com/Kisht2t/MediAssist-AI" target="_blank">GitHub ↗</a>
+        <a href="/docs" target="_blank">Swagger ↗</a>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── Language tab switcher ──────────────────────────────────────────────────
+  function switchTab(tab, blockId) {
+    const container = tab.closest('.lang-tabs').parentElement;
+    container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+    container.querySelectorAll('.lang-block').forEach(b => b.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(blockId)?.classList.add('active');
+  }
+
+  // ── Active sidebar link on scroll ─────────────────────────────────────────
+  const sections = document.querySelectorAll('.section, .hero');
+  const sideLinks = document.querySelectorAll('.sidebar a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        sideLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
