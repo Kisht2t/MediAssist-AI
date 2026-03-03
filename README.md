@@ -277,3 +277,190 @@ Short-term (context window, last 6 turns) handles within-session continuity. Lon
 ## Disclaimer
 
 MediAssist is for **educational and informational purposes only**. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider. In emergencies, call 911.
+
+
+TO DOS:
+ Plan: RAG Expansion with Full Collection Isolation   
+
+ Context
+
+ MediAssist currently has a single ChromaDB collection (medical_knowledge) with
+ 2,062 chunks (seed docs + Wikipedia articles). The user wants to add a drug/medication
+ database and clinical guidelines without disturbing the existing collection, with
+ guardrails so future additions also stay isolated. Image analysis (Claude API) is
+ deferred until after AWS setup.
+
+ ---
+ Isolation Architecture
+
+ ChromaDB supports multiple named collections inside the same persist directory.
+ The existing chroma_db/ folder gains new collections — the original is never touched.
+
+ 3_rag/chroma_db/
+   ├── medical_knowledge     ← EXISTING — never modified
+   ├── drug_database         ← NEW: drug info, interactions, side effects
+   └── clinical_guidelines   ← NEW: WHO/CDC/NIH protocols
+
+ Each collection:
+ - Has its own dedicated indexing script
+ - Can be rebuilt independently (python 3_rag/index_drugs.py --rebuild)
+ - Has source metadata on every chunk for traceability
+ - If missing at runtime, pipeline skips it gracefully (no crash)
+
+ ---
+ Feature 2: Document & Scan Upload
+
+ Users can upload two types of files from the Streamlit sidebar:
+
+ Type A — Text Documents (PDF, TXT lab reports, discharge summaries)
+
+ User uploads PDF/TXT
+         ↓
+ Extract text (pdfplumber for PDF, raw read for TXT)
+         ↓
+ Chunk (512 tokens, 64 overlap) + metadata {source: "patient_upload", session_id}
+         ↓
+ Store in isolated `patient_documents` ChromaDB collection
+         ↓
+ Auto-retrieved in future queries for this session (same MedicalRetriever flow)
+         ↓
+ "Your document has been indexed. Ask me anything about it."
+
+ Type B — Scan Images (PNG, JPG — X-rays, MRIs, blood test photos)
+
+ User uploads image
+         ↓
+ Send to Claude API (claude-sonnet-4-6) with medical imaging system prompt
+         ↓
+ Claude returns conversational analysis (what it sees, possible findings, caveats)
+         ↓
+ Displayed as assistant message in chat — same UI as normal responses
+         ↓
+ Analysis text optionally stored in patient memory for context
+
+ No re-training or model changes needed. Claude handles image understanding.
+ Requires ANTHROPIC_API_KEY in .env.
+
+ ---
+ Files to Create (additive only — nothing existing is deleted)
+
+ 1. 3_rag/index_drugs.py
+
+ - Fetches drug data from OpenFDA public API (free, no API key)
+ - Endpoints used:
+   - /drug/label — indications, warnings, dosage, contraindications
+   - /drug/event — common adverse events
+ - Chunks to 512 tokens (same as existing), overlap 64
+ - Stores into drug_database collection
+ - Metadata per chunk: {"source": "openFDA", "drug_name": str, "category": str}
+ - ~500–1000 drugs covered (top common medications)
+
+ 2. 3_rag/index_guidelines.py
+
+ - Indexes curated clinical guideline summaries
+ - Sources: hardcoded high-quality text (WHO/CDC/NIH protocols) — same pattern
+ as existing SEED_DOCS in index.py (proven approach, no scraping needed)
+ - Topics: hypertension, diabetes, asthma, antibiotics, pain management,
+ mental health crisis, pediatric fever, pregnancy warning signs
+ - Stores into clinical_guidelines collection
+ - Metadata per chunk: {"source": "WHO"|"CDC"|"NIH", "category": str, "topic": str}
+
+ ---
+ Files to Modify
+
+ 3. 3_rag/pipeline.py — MedicalRetriever class only (lines 341–374)
+
+ Current (single collection):
+ self._store = Chroma(collection_name=COLLECTION, ...)
+ results = self._store.similarity_search_with_relevance_scores(query, k=k)
+
+ New (multi-collection with isolation):
+ # Connect to each collection independently
+ self._stores = {}
+ for col in [COLLECTION, "drug_database", "clinical_guidelines"]:
+     try:
+         store = Chroma(collection_name=col, ...)
+         if store._collection.count() > 0:
+             self._stores[col] = store
+     except Exception:
+         pass  # collection doesn't exist yet — skip silently
+
+ Fetch merges results from all available collections, deduplicates by content hash,
+ then feeds the combined list to the existing cross-encoder reranker unchanged.
+ The reranker already handles mixed-source docs — no changes needed there.
+
+ ---
+ Guardrails
+
+ 1. Script isolation: Each index_*.py only touches its own collection.
+ Running index_drugs.py cannot affect medical_knowledge — different
+ collection name, independent ChromaDB client.
+ 2. Graceful degradation: If drug_database doesn't exist yet (not indexed),
+ MedicalRetriever skips it silently. Existing behavior is unchanged.
+ 3. Metadata tagging: Every chunk carries {"collection": name, "source": ...}
+ so retrieved sources shown in the UI identify where the info came from.
+ 4. Future additions: To add a new knowledge domain later, just create
+ index_newdomain.py targeting a new collection name. Zero changes to
+ pipeline.py — it auto-discovers non-empty collections.
+ 5. Rebuild safety: Each index script wipes and rebuilds only its own collection
+ (same client.delete_collection() pattern as existing index.py line 236).
+
+ ---
+ 3. 3_rag/scan_analyzer.py (new)
+
+ - Thin wrapper around Claude API for image analysis
+ - analyze_scan(image_bytes, mime_type) -> str
+ - Medical imaging system prompt: "You are a medical imaging assistant..."
+ - Includes disclaimer in every response
+ - Requires ANTHROPIC_API_KEY in .env
+
+ ---
+ Files to Modify
+
+ 4. 3_rag/pipeline.py — MedicalRetriever class only (lines 341–374)
+
+ (As described above — multi-collection with graceful fallback)
+
+ 5. 4_app/api.py — add one new endpoint
+
+ POST /upload
+   - Accepts: multipart/form-data (file + session_id)
+   - PDF/TXT → extract text → chunk → index into patient_documents collection
+   - Image (PNG/JPG) → call scan_analyzer.analyze_scan() → return analysis
+   - Returns: {"type": "document"|"image", "message": str, "analysis": str|None}
+ New imports only: UploadFile, File, pdfplumber, scan_analyzer
+
+ 6. 6_ui/app.py — add upload section to existing sidebar
+
+ - After "Generate Clinical Note" button (line ~911), add _sidebar_section("Upload Files")
+ - st.file_uploader(type=["pdf", "txt", "png", "jpg", "jpeg"])
+ - On upload: POST to /upload endpoint → show result as assistant message in chat
+ - Matches existing sidebar style (_sidebar_section + teal accent)
+
+ ---
+ Critical Files
+
+ - 3_rag/pipeline.py — modify MedicalRetriever.__init__ and fetch only
+ - 3_rag/index.py — reference only, NOT modified
+ - 3_rag/index_drugs.py — create new
+ - 3_rag/index_guidelines.py — create new
+ - 3_rag/scan_analyzer.py — create new
+ - 4_app/api.py — add /upload endpoint only
+ - 6_ui/app.py — add upload section to sidebar only
+
+ Dependencies to add to requirements.txt
+
+ - pdfplumber — PDF text extraction
+ - anthropic — Claude API for image analysis
+
+ Verification
+
+ 1. python 3_rag/index_drugs.py → drug_database collection built
+ 2. python 3_rag/index_guidelines.py → clinical_guidelines collection built
+ 3. python 3_rag/index.py → medical_knowledge chunk count unchanged
+ 4. Query "dosage for ibuprofen" → sources show drug_database chunks
+ 5. Query "chest pain" → sources show medical_knowledge chunks (existing behavior intact)
+ 6. Upload a PDF → "indexed" confirmation, follow-up query uses its content
+ 7. Upload a scan image → Claude returns analysis as chat message
+ 8. Delete drug_database → app still works on medical_knowledge alone
+
