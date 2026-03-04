@@ -464,3 +464,12 @@ TO DOS:
  7. Upload a scan image → Claude returns analysis as chat message
  8. Delete drug_database → app still works on medical_knowledge alone
 
+TO DOS:
+
+Authentication
+User records collection for context specification for user
+n8n workflow
+server hosting
+AI Agent for for symptom collection (User query is converted oru structure to LLM + conext from database) Context and promt engineering
+RAG Design database for better retrieval (Additional data + patient docs)
+UI
