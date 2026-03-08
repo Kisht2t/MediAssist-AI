@@ -147,7 +147,7 @@ OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PART
 PURPOSE.
 
 
-[github]: https://github.com/kisht2t/mediassist
-[readme]: https://github.com/kisht2t/mediassist/blob/main/README.md
-[discussions]: https://github.com/kisht2t/mediassist/discussions
+[github]: https://github.com/Kisht2t/MediAssist-AI
+[readme]: https://github.com/Kisht2t/MediAssist-AI/blob/main/README.md
+[discussions]: https://github.com/Kisht2t/MediAssist-AI/discussions
 [pullrequesthelp]: https://help.github.com/articles/using-pull-requests
