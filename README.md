@@ -473,3 +473,10 @@ server hosting
 AI Agent for for symptom collection (User query is converted oru structure to LLM + conext from database) Context and promt engineering
 RAG Design database for better retrieval (Additional data + patient docs)
 UI
+
+-----------
+
+Expand MediAssist seriously — add eval frameworks, benchmark it against GPT-4o, write up what you learned about RAG failures in medical contexts. That's publishable insight.
+Build an interpretability micro-project — take a small open source model, visualize attention heads, write about what you found. Anthropic literally does interpretability research — this speaks their language directly.
+Contribute to a real open source AI repo — LangChain, LlamaIndex, DSPy, or even Anthropic's own SDK. Even one meaningful PR gets your name in the commit history of something people use.
+Build an eval pipeline for LLMs — evals are the hottest thing in AI engineering right now. Build a small public benchmark for something specific (medical QA, trade document parsing, anything), put it on GitHub, write about it.
